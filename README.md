@@ -4,3 +4,5 @@ This Burp extension is used to updated token values tie to a session, such as a 
 By slightly modifying the code, you can also use this to update CSRF tokens without using macros, which are very inefficent becaues the require a request after reach request.
 
 If you are signing into multiple sessions at the same time, I would disable this, as it wil likely cause issues.
+
+See the [Releases](https://github.com/alexlauerman/UpdateToken/releases) tab for a pre-built jar.
