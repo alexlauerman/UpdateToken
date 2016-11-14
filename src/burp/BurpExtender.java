@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
-import org.apache.commons.lang.StringEscapeUtils;
+//import org.apache.commons.lang.StringEscapeUtils;
 
 
 public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
@@ -79,7 +79,7 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
             //Update Token Logic
             if (!nextToken.equals("")) {
 
-                //Code for updating a Header
+                //Code for updating a token in a Header
                 //log old header & update new header
                 for (int i = 0; i < headers.size(); i++)
                 {
@@ -124,7 +124,7 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
                 stdout.println("-----end output-------");
             }
         }
-        else//it's a response
+        else//it's a response - grab a new token
         {
             burp.IRequestInfo iResponse = helpers.analyzeRequest(messageInfo);
             String response = new String(messageInfo.getResponse());
@@ -141,7 +141,6 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
                 stdout.println("tokenStartIndex: " + tokenStartIndex);
                 stdout.println("tokenEndIndex: " + tokenEndIndex);
                 nextToken = response.substring(tokenStartIndex, tokenEndIndex);
-                //nextToken = StringEscapeUtils.unescapeHtml(nextToken);//this is how this app works
                 stdout.println("grabbed token: " + nextToken);
 
             }
