@@ -88,7 +88,7 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
                     if (H.contains("Authorization:")) {
                         hash = H.split(" ")[2];
                         stdout.println("Authorization header used to be: " + hash);
-                        H = "Authorization: bearer " + nextToken;
+                        H = "Authorization: Bearer " + nextToken;
                     }
 
                     headers.set(i, H);
@@ -98,7 +98,7 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
                 //helpers.updateParameter should work here, but you can't update the iParmaeter using helpers
 
                 //logic for upating token in the body...
-                /*String startMatch = "Authorization: bearer ";
+                /*String startMatch = "Authorization: Bearer ";
                 String endMatch = "\n";
                 if (reqBody.contains(startMatch)) {
                     //update csrf token
