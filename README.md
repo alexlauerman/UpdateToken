@@ -9,7 +9,7 @@ It will extract the following token from an HTTP response:
 
 And then include it in future request headers in the following format:
 ```
-Authorization: bearer 5dbf5b54-4644-4015-a08e-333deea4c78c
+Authorization: Bearer 5dbf5b54-4644-4015-a08e-333deea4c78c
 ```
 
 If you are signing into multiple sessions at the same time, I would disable this extension, as it wil likely cause issues for you.
