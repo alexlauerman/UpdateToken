@@ -1,6 +1,8 @@
 package burp;
 
 import java.awt.Component;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -51,7 +53,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
     }
     
     // https://stackoverflow.com/questions/13592236/parse-a-uri-string-into-name-value-collection
-    public static Map<String, String> splitQuery (String query) throws UnsupportedEncodingException  {
+    private Map<String, String> splitQuery (String query) throws UnsupportedEncodingException  {
     Map<String, String> query_pairs = new LinkedHashMap<String, String>();
     String[] pairs = query.split("&");
     for (String pair : pairs) {
@@ -63,28 +65,29 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
     
     // refactored to a function, updates global variable for token and expiry
     private void setToken(String response) {
-        if (response.contains("{\"access_token\":\"")) {
-            String startMatch = "{\"access_token\":\"";
+        String res = response.replace(" ", ""); // get rid of extra spaces
+        if (res.contains("\"access_token\":\"")) {
+            String startMatch = "\"access_token\":\"";
             String endMatch = "\"";
-            int tokenStartIndex = response.indexOf(startMatch) + startMatch.length();
-            int tokenEndIndex = response.indexOf(endMatch, tokenStartIndex+1);
-            nextToken = response.substring(tokenStartIndex, tokenEndIndex);
+            int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
+            int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
+            nextToken = res.substring(tokenStartIndex, tokenEndIndex);
             stdout.println("Grabbed oauth token: " + nextToken);
         }
 
-        if (response.contains("\"expires_in\":\"")) {
+        if (res.contains("\"expires_in\":\"")) {
             String startMatch = "\"expires_in\":\"";
             String endMatch = "\"";
-            int tokenStartIndex = response.indexOf(startMatch) + startMatch.length();
-            int tokenEndIndex = response.indexOf(endMatch, tokenStartIndex+1);
+            int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
+            int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
             try {
-                expiry = LocalDateTime.now().plusSeconds(Integer.parseInt(response.substring(tokenStartIndex, tokenEndIndex)));
+                expiry = LocalDateTime.now().plusSeconds(Integer.parseInt(res.substring(tokenStartIndex, tokenEndIndex)));
                 stdout.println("Grabbed expiry time: " + expiry);
             } catch (Exception e) {
                 stdout.println("Seems like expiry wasn't an integer, here's some debug:");
                 stdout.println(e);
             }
-            // this part is a bit dodgy..
+            // this part is a bit dodgy.. doesn't check nextToken validity
             gui.addToTable(scope, nextToken, expiry);
             scope = "";
         }
@@ -98,12 +101,12 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
         {
             String H = headers.get(i);
             String oauthToken = "";
-
-            if (H.contains("Authorization:")) {
+            
+            if (H.contains("Authorization: Bearer")) {
                 oauthToken = H.split(" ")[2];
                 stdout.println("Authorization header used to be: " + oauthToken);
-                H = "Authorization: Bearer " + nextToken;
-                stdout.println("Authorization header until " + expiry.toString() + ": " + nextToken);
+                H = "Authorization: Bearer " + gui.getToken();
+                stdout.println("Authorization header until " + gui.getExpiry() + ": " + gui.getToken());
             }
             headers.set(i, H);
 
@@ -123,24 +126,31 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
             List<String> headers = iRequest.getHeaders();
             String reqBody = request.substring(iRequest.getBodyOffset());
             String httpmethod = headers.get(0).split(" ")[0];
-           
             // save last oauth request to send through later if token is expired
-            if (helpers.analyzeRequest(messageInfo).getUrl().toString().contains("auth/token")) {
+            if (helpers.analyzeRequest(messageInfo).getUrl().toString().contains(gui.getURLPattern()) && !updating) {
                 oauthRequest = helpers.buildHttpMessage(headers, reqBody.getBytes());
                 stdout.println("Saving oauth token request: \n" + helpers.bytesToString(oauthRequest) + "\n");
-                gui.addTokenCall(helpers.analyzeRequest(messageInfo).getUrl().toString(), httpmethod, reqBody, LocalDateTime.now());
+                String auth = "";
+                // check for basic auth or some other auth method
+                for (String s : headers) {
+                    if (s.contains("Authorization")) {
+                        auth = s.split(":")[1];
+                    }
+                }
+                gui.addTokenCall(helpers.analyzeRequest(messageInfo).getUrl().toString(), httpmethod, auth, reqBody, LocalDateTime.now());
                 try {
                     scope = splitQuery(reqBody).get("scope");
                 } catch (UnsupportedEncodingException ex) {
                     Logger.getLogger(BurpExtender.class.getName()).log(Level.SEVERE, null, ex);
                 }
-                stdout.println("test");
             }
             
             // Update Token Logic
-            if (expiry != null && LocalDateTime.now().isAfter(expiry) && !updating) {
+            if (gui.getRowCount() > 0 && LocalDateTime.parse(gui.getExpiry()) != null && LocalDateTime.now().isAfter(
+                    LocalDateTime.parse(gui.getExpiry())) && !updating) {
                 // don't need the response, it comes back to processHttpMessage
                 // and goes to the response section
+                stdout.println("Expired Token, getting a new one");
                 updating = true;
                 cb.makeHttpRequest(httpService, oauthRequest);
                 updated = true;
