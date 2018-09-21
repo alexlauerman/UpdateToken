@@ -38,7 +38,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
         stdout = new PrintWriter(callbacks.getStdout(), true);
         stderr = new PrintWriter(callbacks.getStderr(), true);
         cb = callbacks;
-        updating = false;
+        updating = false; // cheat flag so it doesn't inf loop
         
         // set our extension name
         cb.setExtensionName("OauthHelper");
@@ -52,7 +52,9 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
         cb.addSuiteTab(gui);
     }
     
-    // https://stackoverflow.com/questions/13592236/parse-a-uri-string-into-name-value-collection
+    /* https://stackoverflow.com/questions/13592236/parse-a-uri-string-into-name-value-collection
+     * straight copy/paste from link above
+     */
     private Map<String, String> splitQuery (String query) throws UnsupportedEncodingException  {
     Map<String, String> query_pairs = new LinkedHashMap<String, String>();
     String[] pairs = query.split("&");
@@ -64,19 +66,20 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
 }
     
     // refactored to a function, updates global variable for token and expiry
+    // could refactor again to use regex... makes it a bit shorter
     private void setToken(String response) {
         String res = response.replace(" ", ""); // get rid of extra spaces
-        if (res.contains("\"access_token\":\"")) {
-            String startMatch = "\"access_token\":\"";
+        if (res.contains("\"" + gui.getTokenPattern() + "\":\"")) {
+            String startMatch = "\"" + gui.getTokenPattern() + "\":\"";
             String endMatch = "\"";
-            int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
+            int tokenStartIndex = res.indexOf(startMatch) + startMatch.length(); 
             int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
             nextToken = res.substring(tokenStartIndex, tokenEndIndex);
             stdout.println("Grabbed oauth token: " + nextToken);
-        }
 
-        if (res.contains("\"expires_in\":\"")) {
-            String startMatch = "\"expires_in\":\"";
+        }
+        if (res.contains("\"" + gui.getExpiryPattern() + "\":\"")) {
+            String startMatch = "\"" + gui.getExpiryPattern() + "\":\"";
             String endMatch = "\"";
             int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
             int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
@@ -87,24 +90,22 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
                 stdout.println("Seems like expiry wasn't an integer, here's some debug:");
                 stdout.println(e);
             }
-            // this part is a bit dodgy.. doesn't check nextToken validity
-            gui.addToTable(scope, nextToken, expiry);
-            scope = "";
+        } else {
+            expiry = LocalDateTime.now();
         }
-        
+        gui.addToTable(scope, nextToken, expiry);
     }
     
     private void updateHeader(List<String> headers) {
         // Code for updating a token in a Header
         // log old header & update new header
-        for (int i = 0; i < headers.size(); i++)
-        {
+        for (int i = 0; i < headers.size(); i++) {
             String H = headers.get(i);
             String oauthToken = "";
             
             if (H.contains("Authorization: Bearer")) {
                 oauthToken = H.split(" ")[2];
-                stdout.println("Authorization header used to be: " + oauthToken);
+                stdout.println("\nAuthorization header used to be: " + oauthToken);
                 H = "Authorization: Bearer " + gui.getToken();
                 stdout.println("Authorization header until " + gui.getExpiry() + ": " + gui.getToken());
             }
@@ -127,7 +128,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
             String reqBody = request.substring(iRequest.getBodyOffset());
             String httpmethod = headers.get(0).split(" ")[0];
             // save last oauth request to send through later if token is expired
-            if (helpers.analyzeRequest(messageInfo).getUrl().toString().contains(gui.getURLPattern()) && !updating) {
+            if (helpers.analyzeRequest(messageInfo).getUrl().toString().contains(gui.getURLPattern())) {
                 oauthRequest = helpers.buildHttpMessage(headers, reqBody.getBytes());
                 stdout.println("Saving oauth token request: \n" + helpers.bytesToString(oauthRequest) + "\n");
                 String auth = "";
@@ -146,32 +147,28 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
             }
             
             // Update Token Logic
-            if (gui.getRowCount() > 0 && LocalDateTime.parse(gui.getExpiry()) != null && LocalDateTime.now().isAfter(
-                    LocalDateTime.parse(gui.getExpiry())) && !updating) {
+            if (gui.getRowCount() > 0 && gui.getExpiry() != null && 
+                    LocalDateTime.now().isAfter(LocalDateTime.parse(gui.getExpiry())) && !updating) {
                 // don't need the response, it comes back to processHttpMessage
                 // and goes to the response section
-                stdout.println("Expired Token, getting a new one");
+                stdout.println("Expired Token (" + nextToken + "), getting a new one");
                 updating = true;
-                cb.makeHttpRequest(httpService, oauthRequest);
-                updated = true;
-                updateHeader(headers); 
+                try {
+                    cb.makeHttpRequest(httpService, oauthRequest);
+                    updated = true;
+                    updateHeader(headers); 
+                } catch (Exception e) {
+                    stdout.println("No OauthRequest saved!");
+                }
             } else if (!nextToken.equals("")) { 
                 updated = true;
                 updateHeader(headers);
             }
 
             if (updated) {
-                //stdout.println("-----Request Before Plugin Update-------");
-                //stdout.println(helpers.bytesToString(messageInfo.getRequest()).);
-                //stdout.println("-----end output-------");
-
                 byte[] message = helpers.buildHttpMessage(headers, reqBody.getBytes());
                 messageInfo.setRequest(message);
                 updating = false;
-
-                //stdout.println("-----Request After Plugin Update-------");
-                //stdout.println(helpers.bytesToString(messageInfo.getRequest()));
-                //stdout.println("-----end output-------");
             }
         }
         // it's a response - grab a new token

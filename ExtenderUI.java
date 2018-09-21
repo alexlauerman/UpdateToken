@@ -20,6 +20,9 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
     public ExtenderUI() {
         initComponents(); 
         jTextField1.setText("auth/token"); // default
+        buttonGroup1.add(jRadioButton1);
+        buttonGroup1.add(jRadioButton2);
+        buttonGroup1.add(jRadioButton3);
     }
 
     /**
@@ -31,6 +34,7 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         jTabbedPane1 = new javax.swing.JTabbedPane();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane3 = new javax.swing.JScrollPane();
@@ -41,6 +45,13 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
         jTable2 = new javax.swing.JTable();
         jTextField1 = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
+        jTextField2 = new javax.swing.JTextField();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        jTextField3 = new javax.swing.JTextField();
+        jRadioButton1 = new javax.swing.JRadioButton();
+        jRadioButton2 = new javax.swing.JRadioButton();
+        jRadioButton3 = new javax.swing.JRadioButton();
 
         setPreferredSize(new java.awt.Dimension(1000, 800));
 
@@ -87,7 +98,7 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
 
             },
             new String [] {
-                "URL", "HTTP Method", "Authorisation", "client_id", "client_secret", "scope", "grant_type", "date"
+                "URL", "HTTP Method", "Authorization", "client_id", "client_secret", "scope", "grant_type", "date"
             }
         ));
         jScrollPane2.setViewportView(jTable2);
@@ -99,6 +110,39 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
         jLabel1.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
         jLabel1.setText("URL Pattern to match for saving Oauth requests (eg - https://host:443/v1/oauth/token)");
 
+        jTextField2.setText("access_token");
+
+        jLabel3.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel3.setText("Token Field Name");
+
+        jLabel4.setFont(new java.awt.Font("Tahoma", 0, 12)); // NOI18N
+        jLabel4.setText("Expiry Field Name");
+
+        jTextField3.setText("expires_in");
+
+        jRadioButton1.setSelected(true);
+        jRadioButton1.setText("Seconds");
+        jRadioButton1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                jRadioButton1MouseReleased(evt);
+            }
+        });
+
+        jRadioButton2.setText("Minutes");
+        jRadioButton2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                jRadioButton2MouseReleased(evt);
+            }
+        });
+
+        jRadioButton3.setText("Epoch Time");
+        jRadioButton3.setToolTipText("");
+        jRadioButton3.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseReleased(java.awt.event.MouseEvent evt) {
+                jRadioButton3MouseReleased(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -107,10 +151,26 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
                 .addContainerGap()
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 949, Short.MAX_VALUE)
+                    .addComponent(jTextField1)
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(jLabel1)
                         .addGap(0, 0, Short.MAX_VALUE))
-                    .addComponent(jTextField1))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jTextField2))
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(jRadioButton1)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jRadioButton2)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jRadioButton3)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(jTextField3))))
                 .addContainerGap())
         );
         jPanel2Layout.setVerticalGroup(
@@ -120,9 +180,22 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
                 .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(4, 4, 4)
                 .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTextField2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jTextField3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 658, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jRadioButton1)
+                    .addComponent(jRadioButton2)
+                    .addComponent(jRadioButton3))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 580, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(23, Short.MAX_VALUE))
         );
 
         jTabbedPane1.addTab("Saved Oauth Request", jPanel2);
@@ -145,18 +218,41 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
         );
     }// </editor-fold>//GEN-END:initComponents
 
+    private void jRadioButton1MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jRadioButton1MouseReleased
+        jRadioButton2.setSelected(false);
+        jRadioButton3.setSelected(false);
+    }//GEN-LAST:event_jRadioButton1MouseReleased
+
+    private void jRadioButton2MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jRadioButton2MouseReleased
+        jRadioButton1.setSelected(false);
+        jRadioButton3.setSelected(false);
+    }//GEN-LAST:event_jRadioButton2MouseReleased
+
+    private void jRadioButton3MouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jRadioButton3MouseReleased
+        jRadioButton2.setSelected(false);
+        jRadioButton1.setSelected(false);
+    }//GEN-LAST:event_jRadioButton3MouseReleased
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JRadioButton jRadioButton1;
+    private javax.swing.JRadioButton jRadioButton2;
+    private javax.swing.JRadioButton jRadioButton3;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JTabbedPane jTabbedPane1;
     private javax.swing.JTable jTable1;
     private javax.swing.JTable jTable2;
     private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextField jTextField2;
+    private javax.swing.JTextField jTextField3;
     // End of variables declaration//GEN-END:variables
 
     @Override
@@ -183,6 +279,19 @@ public class ExtenderUI extends javax.swing.JPanel implements ITab {
     
     public String getURLPattern() {
         return jTextField1.getText();
+    }
+    
+    public String getTokenPattern() {
+        return jTextField2.getText();
+    }
+    
+    public String getExpiryPattern() {
+        return jTextField3.getText();
+    }
+    
+    public String getExpiryMode() {
+        buttonGroup1.getSelection().toString();
+        return "";
     }
     
     public void addToTable(String scope, String token, LocalDateTime date) {
