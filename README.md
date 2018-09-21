@@ -13,7 +13,7 @@ And then include it in future request headers in the following format:
 Authorization: Bearer 5dbf5b54-4644-4015-a08e-333deea4c78c
 ```
 
-It will then check if the token has expired if an "expires_in" field is given in the response
+It will then check if the token has expired if an "expires_in" field is given in the response and send an oauth token request to grab a fresh token and update your request seemlessly.
 
 If you are signing into multiple sessions at the same time, I would disable this extension, as it wil likely cause issues for you. At the moment, it will not allow you to choose which Oauth request to use to refresh the token.
 
