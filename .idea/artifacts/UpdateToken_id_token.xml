@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="UpdateToken-id_token">
+    <output-path>$PROJECT_DIR$/out/artifacts/UpdateToken_id_token</output-path>
+    <root id="archive" name="UpdateToken-id_token.jar">
+      <element id="module-output" name="UpdateToken" />
+      <element id="library" level="project" name="commons-lang:commons-lang:Latest" />
+      <element id="directory" name="lib">
+        <element id="library" level="project" name="commons-lang:commons-lang:Latest" />
+      </element>
+    </root>
+  </artifact>
+</component>
