@@ -6,7 +6,9 @@ import java.awt.event.MouseListener;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +25,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
     private PrintWriter stderr;
     private IBurpExtenderCallbacks cb;
     private ExtenderUI gui;
+    
     private boolean updating;
-
     private String nextToken = "";
     private LocalDateTime expiry = null;
     private byte[] oauthRequest = null;
@@ -41,7 +43,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
         updating = false; // cheat flag so it doesn't inf loop
         
         // set our extension name
-        cb.setExtensionName("OauthHelper");
+        cb.setExtensionName("OauthRefresher");
 
         // register ourselves as a HTTP listener
         cb.registerHttpListener(this);
@@ -69,6 +71,49 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
     // could refactor again to use regex... makes it a bit shorter
     private void setToken(String response) {
         String res = response.replace(" ", ""); // get rid of extra spaces
+        if (res.contains("\"" + gui.getExpiryPattern() + "\":\"")) {
+            String startMatch = "\"" + gui.getExpiryPattern() + "\":\"";
+            String endMatch = "\"";
+            int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
+            int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
+            // TODO grab the 3rd tickbox and it's value for expiry
+            if (gui.getExpiryMode() == "Seconds") {
+                
+                try {
+                    expiry = LocalDateTime.now().plusSeconds(Integer.parseInt(res.substring(tokenStartIndex, tokenEndIndex)));
+                    stdout.println("Grabbed expiry time: " + expiry);
+                } catch (Exception e) {
+                    stdout.println("Seems like expiry wasn't an integer, here's some debug:");
+                    stdout.println(e);
+                    stdout.println();
+                    stdout.println(res.substring(tokenStartIndex, tokenEndIndex));
+                }
+            } else if (gui.getExpiryMode() == "Epoch") {
+                try {
+                    expiry = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(res.substring(tokenStartIndex, tokenEndIndex))),
+                            ZoneId.systemDefault());
+                    stdout.println("Grabbed expiry time: " + expiry);
+                } catch (Exception e) {
+                    stdout.println("Seems like expiry wasn't in epoch time, here's some debug:");
+                    stdout.println(e);
+                    stdout.println();
+                    stdout.println(res.substring(tokenStartIndex, tokenEndIndex));
+                }
+            } else if (gui.getExpiryMode() == "CustomSeconds") {
+                
+                try {
+                    expiry = LocalDateTime.now().plusSeconds(Integer.parseInt(gui.getCustomExpiry()));
+                    stdout.println("Grabbed expiry time: " + expiry);
+                } catch (Exception e) {
+                    stdout.println("Seems like expiry wasn't an integer, here's some debug:");
+                    stdout.println(e);
+                    stdout.println();
+                    stdout.println(res.substring(tokenStartIndex, tokenEndIndex));
+                }
+            }
+        } else {
+            expiry = LocalDateTime.now();
+        }
         if (res.contains("\"" + gui.getTokenPattern() + "\":\"")) {
             String startMatch = "\"" + gui.getTokenPattern() + "\":\"";
             String endMatch = "\"";
@@ -76,24 +121,8 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
             int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
             nextToken = res.substring(tokenStartIndex, tokenEndIndex);
             stdout.println("Grabbed oauth token: " + nextToken);
-
+            gui.addToTable(scope, nextToken, expiry);
         }
-        if (res.contains("\"" + gui.getExpiryPattern() + "\":\"")) {
-            String startMatch = "\"" + gui.getExpiryPattern() + "\":\"";
-            String endMatch = "\"";
-            int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
-            int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
-            try {
-                expiry = LocalDateTime.now().plusSeconds(Integer.parseInt(res.substring(tokenStartIndex, tokenEndIndex)));
-                stdout.println("Grabbed expiry time: " + expiry);
-            } catch (Exception e) {
-                stdout.println("Seems like expiry wasn't an integer, here's some debug:");
-                stdout.println(e);
-            }
-        } else {
-            expiry = LocalDateTime.now();
-        }
-        gui.addToTable(scope, nextToken, expiry);
     }
     
     private void updateHeader(List<String> headers) {
@@ -127,6 +156,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
             List<String> headers = iRequest.getHeaders();
             String reqBody = request.substring(iRequest.getBodyOffset());
             String httpmethod = headers.get(0).split(" ")[0];
+            
             // save last oauth request to send through later if token is expired
             if (helpers.analyzeRequest(messageInfo).getUrl().toString().contains(gui.getURLPattern())) {
                 oauthRequest = helpers.buildHttpMessage(headers, reqBody.getBytes());
@@ -146,8 +176,16 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
                 }
             }
             
+            // little check to see it actually has an Authorization header
+            boolean authFlag = false;
+            for (String s : headers) {
+                if (s.contains("Authorization")) {
+                    authFlag = true;
+                }
+            }
+            
             // Update Token Logic
-            if (gui.getRowCount() > 0 && gui.getExpiry() != null && 
+            if (gui.getRowCount() > 0 && gui.getExpiry() != null && authFlag &&
                     LocalDateTime.now().isAfter(LocalDateTime.parse(gui.getExpiry())) && !updating) {
                 // don't need the response, it comes back to processHttpMessage
                 // and goes to the response section
@@ -158,7 +196,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
                     updated = true;
                     updateHeader(headers); 
                 } catch (Exception e) {
-                    stdout.println("No OauthRequest saved!");
+                    stdout.println("No Oauth Request saved!");
                 }
             } else if (!nextToken.equals("")) { 
                 updated = true;
@@ -174,7 +212,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
         // it's a response - grab a new token
         else {
             String response = new String(messageInfo.getResponse());
-            
             setToken(response);
         }
     }
