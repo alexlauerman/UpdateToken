@@ -76,7 +76,7 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
             String endMatch = "\"";
             int tokenStartIndex = res.indexOf(startMatch) + startMatch.length();
             int tokenEndIndex = res.indexOf(endMatch, tokenStartIndex+1);
-            // TODO grab the 3rd tickbox and it's value for expiry
+            
             if (gui.getExpiryMode() == "Seconds") {
                 
                 try {
@@ -85,8 +85,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
                 } catch (Exception e) {
                     stdout.println("Seems like expiry wasn't an integer, here's some debug:");
                     stdout.println(e);
-                    stdout.println();
-                    stdout.println(res.substring(tokenStartIndex, tokenEndIndex));
                 }
             } else if (gui.getExpiryMode() == "Epoch") {
                 try {
@@ -96,8 +94,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
                 } catch (Exception e) {
                     stdout.println("Seems like expiry wasn't in epoch time, here's some debug:");
                     stdout.println(e);
-                    stdout.println();
-                    stdout.println(res.substring(tokenStartIndex, tokenEndIndex));
                 }
             } else if (gui.getExpiryMode() == "CustomSeconds") {
                 
@@ -107,8 +103,6 @@ public class BurpExtender implements IBurpExtender, IHttpListener, ITab {
                 } catch (Exception e) {
                     stdout.println("Seems like expiry wasn't an integer, here's some debug:");
                     stdout.println(e);
-                    stdout.println();
-                    stdout.println(res.substring(tokenStartIndex, tokenEndIndex));
                 }
             }
         } else {
