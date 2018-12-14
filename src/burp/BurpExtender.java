@@ -1,21 +1,8 @@
 package burp;
+// vim: et:ts=4:sts=4:sw=4:fileencoding=utf-8
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.Random;
-import java.util.TimeZone;
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-import java.security.MessageDigest;
-//import org.apache.commons.lang.StringEscapeUtils;
-
 
 public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
 {
@@ -23,8 +10,8 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
     private PrintWriter stdout;
     private PrintWriter stderr;
 
-    private int counter = 0;
     private String nextToken = "";
+    private int nextTokenLen = 0;
 
     //
     // implement IBurpExtender
@@ -52,6 +39,7 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
     public void processHttpMessage(int toolFlag, boolean messageIsRequest, burp.IHttpRequestResponse messageInfo)
     {
         boolean updated = false;
+    String[] checks = new String[]{ "{\"access_token\":\"", "{\"token\":\"" };
 
         // only process requests
         if (messageIsRequest) {
@@ -65,34 +53,31 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
             // get the request body
             String reqBody = request.substring(iRequest.getBodyOffset());
 
-
-            String uri = "";
-            String httpmethod = "";
-            String hash = "";
-
-
             //Get all the data needed
-            httpmethod = headers.get(0).split(" ")[0];
-            uri = headers.get(0).split(" ")[1];
-
+            String[] pieces = headers.get(0).split(" ", 3);
+            String httpmethod = pieces[0];
+            String uri = pieces[1];
 
             //Update Token Logic
             if (!nextToken.equals("")) {
-
                 //Code for updating a token in a Header
                 //log old header & update new header
                 for (int i = 0; i < headers.size(); i++)
                 {
                     String H = headers.get(i);
-
-                    if (H.contains("Authorization:")) {
-                        hash = H.split(" ")[2];
-                        stdout.println("Authorization header used to be: " + hash);
-                        H = "Authorization: Bearer " + nextToken;
+                    if (H.toLowerCase().startsWith("authorization:")) {
+                        pieces = H.split(" ", 3);
+                        if (pieces[1].toLowerCase().equals("bearer")) {
+                            String hash = pieces[2];
+                            int hashLen = hash.length();
+                            stdout.println("Replacing " + (hashLen < 8 ? hash : hash.substring(0, 4) + "..." + hash.substring(hashLen - 4, hashLen)) 
+                                    + " with " + (nextTokenLen < 8 ? nextToken : nextToken.substring(0, 4) + "..." + nextToken.substring(nextTokenLen - 4, nextTokenLen)));
+                            H = pieces[0] + " " + pieces[1] + " " + nextToken;
+                            headers.set(i, H);
+                            updated = true;
+                            break;
+                        }
                     }
-
-                    headers.set(i, H);
-                    updated = true;
                 }
 
                 //helpers.updateParameter should work here, but you can't update the iParmaeter using helpers
@@ -112,16 +97,20 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
             }
 
             if (updated) {
+                /*
                 stdout.println("-----Request Before Plugin Update-------");
                 stdout.println(helpers.bytesToString(messageInfo.getRequest()));
                 stdout.println("-----end output-------");
+                */
 
                 byte[] message = helpers.buildHttpMessage(headers, reqBody.getBytes());
                 messageInfo.setRequest(message);
 
+                /*
                 stdout.println("-----Request After Plugin Update-------");
                 stdout.println(helpers.bytesToString(messageInfo.getRequest()));
                 stdout.println("-----end output-------");
+                */
             }
         }
         else//it's a response - grab a new token
@@ -132,17 +121,22 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
 
             //start at {"access_token":"
             //end at "
-            if (response.contains("{\"access_token\":\"")) {
-                //get next csrf token
-                String startMatch = "{\"access_token\":\"";
-                String endMatch = "\"";
-                int tokenStartIndex = response.indexOf(startMatch) + startMatch.length();
-                int tokenEndIndex = response.indexOf(endMatch, tokenStartIndex+1);
-                stdout.println("tokenStartIndex: " + tokenStartIndex);
-                stdout.println("tokenEndIndex: " + tokenEndIndex);
-                nextToken = response.substring(tokenStartIndex, tokenEndIndex);
-                stdout.println("grabbed token: " + nextToken);
-
+            for (String check: checks) {
+                if (response.contains(check)) {
+                    //get next csrf token
+                    String startMatch = check;
+                    String endMatch = "\"";
+                    int tokenStartIndex = response.indexOf(startMatch) + startMatch.length();
+                    int tokenEndIndex = response.indexOf(endMatch, tokenStartIndex+1);
+                    /*
+                    stdout.println("tokenStartIndex: " + tokenStartIndex);
+                    stdout.println("tokenEndIndex: " + tokenEndIndex);
+                    */
+                    nextToken = response.substring(tokenStartIndex, tokenEndIndex);
+                    nextTokenLen = nextToken.length();
+                    // stdout.println("grabbed token: " + nextToken);
+                    break;
+                }
             }
         }
     }
