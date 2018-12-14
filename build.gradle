@@ -1,0 +1,26 @@
+
+// JAVA_HOME=c:/jdk8 gradle --no-daemon assemble
+
+plugins {
+    id 'java'
+}
+
+repositories {
+    // jcenter()
+    maven {
+        url "${artifactory_url}"
+        credentials {
+            username = "${artifactory_user}"
+            password = "${artifactory_password}"
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src']
+        }
+    }
+}
+
