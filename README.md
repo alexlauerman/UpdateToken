@@ -20,5 +20,5 @@ See the [Releases](https://github.com/alexlauerman/UpdateToken/releases) tab for
 It will likely need some customization, so it's more of an extension template for you to modify, than it is something you can use without any changes. I've used this to update a CSRF token, and I've left that code commented out, so you can use this to update CSRF tokens as needed (e.g. ones that quickly time out), without using macros. Macros are very inefficent because they require a second request after reach request, which significantly increases the time it takes to active scan a large or slow site.
 
 ## Contributors
-alexlauerman  
-ilatypov  
+* alexlauerman  
+* ilatypov  
