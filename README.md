@@ -15,6 +15,10 @@ Authorization: Bearer 5dbf5b54-4644-4015-a08e-333deea4c78c
 If you are signing into multiple sessions at the same time, I would disable this extension, as it wil likely cause issues for you.
 
 ## Releases
-See the [Releases](https://github.com/alexlauerman/UpdateToken/releases) tab for a pre-built jar, which is not current and missing some additional features commited to the source.
+See the [Releases](https://github.com/alexlauerman/UpdateToken/releases) tab for a pre-built jar.
 
 It will likely need some customization, so it's more of an extension template for you to modify, than it is something you can use without any changes. I've used this to update a CSRF token, and I've left that code commented out, so you can use this to update CSRF tokens as needed (e.g. ones that quickly time out), without using macros. Macros are very inefficent because they require a second request after reach request, which significantly increases the time it takes to active scan a large or slow site.
+
+## Contributors
+alexlauerman  
+ilatypov  
