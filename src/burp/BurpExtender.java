@@ -39,7 +39,7 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
     public void processHttpMessage(int toolFlag, boolean messageIsRequest, burp.IHttpRequestResponse messageInfo)
     {
         boolean updated = false;
-    String[] checks = new String[]{ "{\"access_token\":\"", "{\"token\":\"" };
+    String[] checks = new String[]{ "\"access_token\":\"", "{\"token\":\"" };
 
         // only process requests
         if (messageIsRequest) {
@@ -118,9 +118,6 @@ public class BurpExtender implements burp.IBurpExtender, burp.IHttpListener
             burp.IRequestInfo iResponse = helpers.analyzeRequest(messageInfo);
             String response = new String(messageInfo.getResponse());
 
-
-            //start at {"access_token":"
-            //end at "
             for (String check: checks) {
                 if (response.contains(check)) {
                     //get next csrf token
